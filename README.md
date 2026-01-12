@@ -1,72 +1,59 @@
-# ➗ Booth Multiplier – Verilog
+Booth Multiplier (FPGA Implementation)
+This project implements an 8-bit signed Booth Multiplier on the Basys-3 FPGA board using Verilog HDL.
+The design follows a clean controller–datapath architecture and supports both manual step-by-step execution and automatic operation for educational and verification purposes.
 
-## Overview
-This project implements a **16-bit signed Booth Multiplier** using Verilog HDL. The design is **modular**, separating the **datapath** and **control path**, and follows Booth’s algorithm for efficient multiplication of two’s complement numbers.
+Overview
+Booth’s algorithm is used to efficiently perform signed multiplication by reducing the number of addition and subtraction operations.
+This implementation allows the algorithm to be observed cycle-by-cycle or executed automatically at a slower clock rate suitable for FPGA demonstration.
 
-Booth multiplication is useful for high-performance signed arithmetic in DSPs, ALUs, and hardware accelerators.
+Architecture
+The design is modular and hierarchical:
 
----
+Top Module (booth_top.v)
 
-## Module Structure
+Integrates datapath, controller, debounce logic, and auto-step clock
+Interfaces with Basys-3 switches, buttons, and LEDs
+Datapath (booth_datapath.v)
 
-### `booth_multiplier.v` – RTL Design (Datapath + Control)
-- **Datapath Components**:
-  - **ALU**: Performs addition/subtraction operations.
-  - **Shift Registers**: Handle right shifts of accumulator and multiplier.
-  - **PIPO Registers**: Load multiplicand and intermediate values.
-  - **Counter**: Tracks number of operations (bit shifts).
+Registers: Accumulator A (N+1 bits), Multiplier Q, and Q-1
+Sign-extended multiplicand M
+Arithmetic unit supporting add/subtract operations
+Arithmetic right shift of {A, Q, Q-1}
+Iteration counter with zero detection
+Controller (booth_controller.v)
 
-- **Control Unit (FSM)**:
-  - Sequences operations based on Booth encoding (`Q0` and `Q-1`).
-  - Controls signal flow: load, shift, add/sub, and done flags.
-  - Manages state transitions for the entire multiplication cycle.
+FSM controlling Booth algorithm flow
+States: IDLE → READY → DECIDE → ADD/SUB → SHIFT → CHECK → FIN
+Generates control signals for add/subtract, shift, and load operations
+Debounce Module (debounce.v)
 
----
-
-### `booth_tb.v` – Testbench
-- Initializes input operands and control signals.
-- Simulates both positive and negative signed multiplication cases.
-- Validates output correctness step-by-step through waveform inspection.
-- Uses `$dumpfile` and `$dumpvars` for GTKWave analysis.
-
----
-
-## Features
-- Supports **16-bit signed multiplication** using **Booth’s algorithm**.
-- Clean **datapath-control separation** mimicking processor-style architecture.
-- FSM-based controller handles encoding and sequencing.
-- Simulated and verified across edge cases (e.g., +ve × −ve, 0 × n, etc.).
-
----
-
-## How to Run
-1. Open `booth_multiplier.v` and `booth_tb.v` in your Verilog simulation tool (e.g., ModelSim, EDA Playground).
-2. Set the testbench top module (`booth_tb`) for simulation.
-3. Observe `Product`, control signals, and state transitions.
-4. Analyze results in waveform viewer (GTKWave recommended).
-
----
-
-## Tools Used
-- **Verilog HDL**
-- **Simulation**: EDA Playground, GTKWave, ModelSim
-- **Design Pattern**: Datapath + FSM Control
-
----
-
-##  Learning Outcomes
-- Gained hands-on experience with **Booth encoding logic**.
-- Practiced modular RTL design separating datapath/control.
-- Understood sequential operations and control sequencing for signed arithmetic.
-
----
-
-## Author
-**Sarath Srinivasan**  
-B.Tech in Electrical Engineering  
-Aspiring VLSI Engineer
-
----
-
-## Tags
-`verilog` `booth-algorithm` `multiplier` `digital-design` `rtl` `fsm` `signed-math` `datapath`
+Converts noisy push-button inputs into clean single-cycle pulses
+Used for load, step, auto toggle, and reset buttons
+Features
+8-bit signed Booth multiplication (parameterizable via N)
+Controller–datapath separation
+Manual single-step execution using push buttons
+Automatic execution using an internal clock divider (~6 Hz)
+Arithmetic right shifting with sign preservation
+Real-time visualization of intermediate results on LEDs
+Clean synchronous design suitable for FPGA synthesis
+Input & Output Mapping (Basys-3)
+Inputs
+Switches
+SW[15:8] → Multiplicand (M)
+SW[7:0] → Multiplier (Q)
+Buttons
+BTN_C → Load operands
+BTN_U → Manual step
+BTN_L → Toggle auto mode
+BTN_R → Reset
+Outputs
+LED[15:8] → Accumulator A (lower 8 bits)
+LED[7:0] → Multiplier Q
+Operation Modes
+Manual Mode
+Each press of the step button advances the algorithm by one Booth iteration
+Useful for understanding intermediate states
+Automatic Mode
+Algorithm runs automatically using a divided clock
+Suitable for demonstration without continuous button presses
